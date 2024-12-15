@@ -8,7 +8,7 @@ import os
 import datetime
 
 
-class Crawler:
+class Downloader:
     '''
         Classe responsável por efetuar o download das páginas necessárias para extração de dados.
     '''
