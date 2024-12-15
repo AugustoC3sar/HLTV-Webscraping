@@ -1,26 +1,50 @@
+import os
 import json
-import datetime
+
 
 class DataManager:
-    def __init__(self):
+    '''
+        Classe responsável por gerenciar os dados extraídos
+    '''
+    def __init__(self, filename:str):
         self.data = {"teams": [], "count": 0}
+        self.filename = filename
+        self.__load_data()
 
-    def addNewTeam(self, id, name, players, rank, coach):
+    def __load_data(self):
+        '''
+            Carrega os dados atuais do Dataset, caso estejam atualizados.
+        '''
+        if os.path.exists(os.path.abspath(self.filename)):
+            with open(self.filename, mode="r") as file:
+                self.data = json.load(file)
+
+    def datasetHasTeam(self, id):
+        return id in [team["Id"] for team in self.data["teams"]]
+
+    def addNewTeam(self, id, name, players, region, coach, rank, recent_results, maps_stats, urls):
+        '''
+            Adiciona um novo time na lista de times.
+        '''
         team = {
             "Id": id,
             "Name": name,
             "Players": players,
             "Coach": coach,
-            "HLTV Rank": rank,
+            "Region": region,
+            "Rank": rank,
+            "Recent Results": recent_results,
+            "Maps Stats": maps_stats,
+            "URLs": urls
         }
         self.data["teams"].append(team)
         self.data["count"] += 1
     
-    def exportJson(self):
-        data = json.dumps(self.data)
-
-        date = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
-        filename = f"HTLV_Scraping_{date}.json"
+    def save_data(self):
+        '''
+            Salva os dados extraídos em um arquivo JSON.
+        '''
+        filename = "VLRGG_Scraping_Dataset.json"
         with open(filename, mode="w", encoding="utf-8") as output:
-            output.write(data)
+            json.dump(self.data, output, indent=4, ensure_ascii=False)
     
