@@ -16,7 +16,7 @@ class Scheduler:
         '''
             Reordenação da fila
         '''
-        self._queue.sort(key=lambda r: r.getPriority())
+        self._queue.sort(key=lambda r: r.getPriority(), reverse=True)
 
     def get(self) -> Request:
         '''
