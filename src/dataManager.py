@@ -39,6 +39,9 @@ class DataManager:
         }
         self.data["teams"].append(team)
         self.data["count"] += 1
+
+        if self.data["count"]%10 == 0:
+            self.save_data()
     
     def save_data(self):
         '''
