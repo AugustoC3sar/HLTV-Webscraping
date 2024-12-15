@@ -64,7 +64,7 @@ class VLRGGScraper:
             crawler_thread.start()
 
         # 1. Extraindo a lista de rankings por região
-        self.downloader.addRankingToQueue("/rankings")
+        self.downloader.addToQueue("/rankings", 1)
 
         ## Obtém a resposta da requisição
         response = self.getResponse("/rankings")
@@ -85,7 +85,7 @@ class VLRGGScraper:
         # 2. Adicionando o link dos rankings na fila de requisições
         self.log("Adding rankings URLs to queue...")
         for ranking in rankings:
-            self.downloader.addRankingToQueue(ranking)
+            self.downloader.addToQueue(ranking, 1)
 
         # 3. Para cada ranking, executa o loop
         for ranking in rankings:
@@ -132,7 +132,7 @@ class VLRGGScraper:
 
         # 3. Adiciona as URLs na fila de requisições
         for url in urls:
-            self.downloader.addTeamToQueue(url)
+            self.downloader.addToQueue(url, 2)
 
         # 4. Para cada URL (time) nos 100 primeiros times
         rank = 0
@@ -174,7 +174,7 @@ class VLRGGScraper:
                 self.log(f"Team '{url}' matchlist page URL extraction FAILED with error {e}! (SKIPPING TEAM)")
                 return_code = -1
                 continue
-            self.downloader.addTeamPageToQueue(matchlist_page)
+            self.downloader.addToQueue(matchlist_page, 3)
 
             # 4.5 Extrai a URL para a página de estatísticas do time e adiciona na fila de requisições
             self.log(f"Extracting team '{url}' statistics page URL...")
@@ -184,7 +184,7 @@ class VLRGGScraper:
                 self.log(f"Team '{url}' statistics page URL extraction FAILED with error {e}! (SKIPPING TEAM)")
                 return_code = -1
                 continue
-            self.downloader.addTeamPageToQueue(stats_page)
+            self.downloader.addToQueue(stats_page, 3)
 
             # 4.5 Espera pela resposta da requisição da página de lista de partidas do time
             response = self.getResponse(matchlist_page)
