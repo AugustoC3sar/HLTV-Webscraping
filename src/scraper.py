@@ -4,7 +4,7 @@ import datetime
 from threading import Thread
 from time import sleep
 
-from src.crawler import Crawler
+from src.downloader import Downloader
 from src.dataExtractor import DataExtractor
 from src.dataManager import DataManager
 
@@ -25,11 +25,11 @@ class VLRGGScraper:
     host = "https://vlr.gg"
 
     def __init__(self, filename):
-        self.crawler = Crawler(self.host)
+        self.downloader = Downloader(self.host)
         self.stop = False
         self.data_extractor = DataExtractor()
         self.data_manager = DataManager(filename)
-        self.wait_time = 5
+        self.wait_time = 10
         now = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%s")
         self.log_file = f"scraper_log_{now}"
     
@@ -46,7 +46,7 @@ class VLRGGScraper:
         '''
         response = None
         while not response:
-            response = self.crawler.getResponse(url)
+            response = self.downloader.getResponse(url)
         
         if response.status_code != 200:
             return None
@@ -60,11 +60,11 @@ class VLRGGScraper:
         '''
         # Configurando thread crawler
         for _ in range(5):
-            crawler_thread = Thread(target=self.crawlerRun, daemon=True)
+            crawler_thread = Thread(target=self.downloaderRun, daemon=True)
             crawler_thread.start()
 
         # 1. Extraindo a lista de rankings por região
-        self.crawler.addRankingToQueue("/rankings")
+        self.downloader.addRankingToQueue("/rankings")
 
         ## Obtém a resposta da requisição
         response = self.getResponse("/rankings")
@@ -85,7 +85,7 @@ class VLRGGScraper:
         # 2. Adicionando o link dos rankings na fila de requisições
         self.log("Adding rankings URLs to queue...")
         for ranking in rankings:
-            self.crawler.addRankingToQueue(ranking)
+            self.downloader.addRankingToQueue(ranking)
 
         # 3. Para cada ranking, executa o loop
         for ranking in rankings:
@@ -132,7 +132,7 @@ class VLRGGScraper:
 
         # 3. Adiciona as URLs na fila de requisições
         for url in urls:
-            self.crawler.addTeamToQueue(url)
+            self.downloader.addTeamToQueue(url)
 
         # 4. Para cada URL (time) nos 100 primeiros times
         rank = 0
@@ -174,7 +174,7 @@ class VLRGGScraper:
                 self.log(f"Team '{url}' matchlist page URL extraction FAILED with error {e}! (SKIPPING TEAM)")
                 return_code = -1
                 continue
-            self.crawler.addTeamPageToQueue(matchlist_page)
+            self.downloader.addTeamPageToQueue(matchlist_page)
 
             # 4.5 Extrai a URL para a página de estatísticas do time e adiciona na fila de requisições
             self.log(f"Extracting team '{url}' statistics page URL...")
@@ -184,7 +184,7 @@ class VLRGGScraper:
                 self.log(f"Team '{url}' statistics page URL extraction FAILED with error {e}! (SKIPPING TEAM)")
                 return_code = -1
                 continue
-            self.crawler.addTeamPageToQueue(stats_page)
+            self.downloader.addTeamPageToQueue(stats_page)
 
             # 4.5 Espera pela resposta da requisição da página de lista de partidas do time
             response = self.getResponse(matchlist_page)
@@ -220,14 +220,14 @@ class VLRGGScraper:
                 continue
 
             # 4.8 Salva o time na na lista de times
-            self.data_manager.addNewTeam(team_id, name, players, region, coach, rank, recent_results, maps_stats, urls)
+            self.data_manager.addNewTeam(team_id, name, players, region, coach, rank, recent_results, maps_stats, team_ulrs[:])
             self.log(f"Team '{name}' added to dataset!")
 
         self.log("-"*70)
 
         return return_code
                 
-    def crawlerRun(self):
+    def downloaderRun(self):
         '''
             Método executado pela thread dedicada do crawler.
 
@@ -235,7 +235,7 @@ class VLRGGScraper:
             espera por um tempo predefinido antes de efetuar um novo download.
         '''
         while not self.stop:
-            self.crawler.requestPage()
+            self.downloader.requestPage()
             sleep(self.wait_time)
 
 
