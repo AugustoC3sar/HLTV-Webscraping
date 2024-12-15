@@ -1,38 +1,76 @@
 import cloudscraper
-from queue import Queue
-import datetime
+from src.scheduler import Scheduler
+from src.request import Request
+from src.priority import Priority
+from src.storage import Storage
 
-from util.waitableDict import WaitableDict
+import os
+import datetime
 
 
 class Crawler:
+    '''
+        Classe responsável por efetuar o download das páginas necessárias para extração de dados.
+    '''
+
     def __init__(self, host):
         self.host = host
-        self.scheduler = Queue()
+        self.scheduler = Scheduler()
         self.downloader = cloudscraper.create_scraper()
-        self.storage = WaitableDict()
-        self.last_request_time = 0
+        self.storage = Storage()
+        if os.path.exists(os.path.abspath("./download_log.txt")):
+            with open("./download_log.txt", mode="w") as file:
+                pass
 
-    def log(self, msg):
-        with open("./log.txt", mode="a") as log:
+    def log(self, msg:str):
+        '''
+            Faz o log de um download no arquivo de logs.
+        '''
+        with open("./download_log.txt", mode="a") as log:
             date = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
             log.write(f"[{date}]: {msg}\n")
 
-    def addToQueue(self, url):
-        self.scheduler.put(url)
+    def addRankingToQueue(self, url:str):
+        '''
+            Adiciona a url de um ranking na lista de requisições.
+        '''
+        request = Request(url, Priority.RANKING)
+        self.scheduler.put(request)
     
+    def addTeamToQueue(self, url:str):
+        '''
+            Adiciona a url de um time na lista de requisições.
+        '''
+        request = Request(url, Priority.TEAM)
+        self.scheduler.put(request)
+    
+    def addTeamPageToQueue(self, url:str):
+        '''
+            Adiciona a url de uma das páginas de um time na lista de requisições.
+        '''
+        request = Request(url, Priority.TEAMPAGE)
+        self.scheduler.put(request)
+
     def requestPage(self):
+        '''
+            Efetua a primeira requisição da fila de requisições.
+        '''
         header = {
             "User-Agent": "*"
         }
 
-        url = self.scheduler.get()
-        response = self.downloader.get(self.host+url, headers=header, allow_redirects=True)
-        self.storage.put(url, response.content)
+        request = self.scheduler.get()
+        response = self.downloader.get(self.host+request.getUrl(), headers=header, allow_redirects=True)
+        request.addResponse(response)
         
-        self.log(f"{url} successfully downloaded!")
+        self.storage.put(request)
+
+        if response.status_code < 400:
+            self.log(f"{request.getUrl()} sucessfully downloaded!")
+        else:
+            self.log(f"{request.getUrl()} download failed with code {response.status_code}!")
     
     def getResponse(self, url):
-        return self.storage.get(url)
+        return self.storage.get(url).getResponse()
 
     
