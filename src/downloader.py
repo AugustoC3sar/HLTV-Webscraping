@@ -29,26 +29,12 @@ class Downloader:
         with open("./download_log.txt", mode="a") as log:
             date = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
             log.write(f"[{date}]: {msg}\n")
-
-    def addRankingToQueue(self, url:str):
-        '''
-            Adiciona a url de um ranking na lista de requisições.
-        '''
-        request = Request(url, Priority.RANKING)
-        self.scheduler.put(request)
     
-    def addTeamToQueue(self, url:str):
+    def addToQueue(self, url:str, priority:int):
         '''
-            Adiciona a url de um time na lista de requisições.
+            Adiciona a url a fila de requisições com uma certa prioridade.
         '''
-        request = Request(url, Priority.TEAM)
-        self.scheduler.put(request)
-    
-    def addTeamPageToQueue(self, url:str):
-        '''
-            Adiciona a url de uma das páginas de um time na lista de requisições.
-        '''
-        request = Request(url, Priority.TEAMPAGE)
+        request = Request(url, Priority(priority)) 
         self.scheduler.put(request)
 
     def requestPage(self):
