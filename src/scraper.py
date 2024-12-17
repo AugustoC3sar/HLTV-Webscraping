@@ -111,7 +111,7 @@ class VLRGGScraper:
 
             Para cada ranking:
                 - Extrai os times e a região do ranking
-                - Para os 100 primeiros times do ranking
+                - Para todos os times do ranking
                     - Extrai as informações citadas na descrição da classe
         '''
         return_code = 0
@@ -134,7 +134,7 @@ class VLRGGScraper:
         for url in urls:
             self.downloader.addToQueue(url, 2)
 
-        # 4. Para cada URL (time) nos 100 primeiros times
+        # 4. Para cada URL (time) no ranking
         rank = 0
 
         for url in urls:
@@ -186,7 +186,7 @@ class VLRGGScraper:
                 continue
             self.downloader.addToQueue(stats_page, 3)
 
-            # 4.5 Espera pela resposta da requisição da página de lista de partidas do time
+            # 4.6 Espera pela resposta da requisição da página de lista de partidas do time
             response = self.getResponse(matchlist_page)
             if not response:
                 self.log(f"Invalid response for URL '{matchlist_page}'! (SKIPPING TEAM)")
@@ -194,7 +194,7 @@ class VLRGGScraper:
                 continue
             team_ulrs.append(self.host+matchlist_page)
             
-            # 4.6 Extrai os resultados recentes do time
+            # 4.7 Extrai os resultados recentes do time
             self.log(f"Extracting team '{url}' recent matches results...")
             try:
                 recent_results = self.data_extractor.extractTeamRecentMatchesResult(response)
@@ -203,7 +203,7 @@ class VLRGGScraper:
                 return_code = -1
                 continue
 
-            # 4.7 Espera pela resposta da requisição da página de estatísticas do time
+            # 4.8 Espera pela resposta da requisição da página de estatísticas do time
             response = self.getResponse(stats_page)
             if not response:
                 self.log(f"Invalid response for URL '{stats_page}'! (SKIPPING TEAM)")
@@ -211,6 +211,7 @@ class VLRGGScraper:
                 continue
             team_ulrs.append(self.host+stats_page)
 
+            # 4.9 Extrai as estatísticas de mapas do time
             self.log(f"Extracting team '{url}' maps statistics...")
             try:
                 maps_stats = self.data_extractor.extractTeamMapsStats(response)
@@ -219,7 +220,7 @@ class VLRGGScraper:
                 return_code = -1
                 continue
 
-            # 4.8 Salva o time na na lista de times
+            # 4.10 Salva o time na na lista de times
             self.data_manager.addNewTeam(team_id, name, players, region, coach, rank, recent_results, maps_stats, team_ulrs[:])
             self.log(f"Team '{name}' added to dataset!")
 
